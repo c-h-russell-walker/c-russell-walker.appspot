@@ -63,7 +63,7 @@ class PostHandler(Handler):
       p.put()
       # redirect to permalink for entry
       post_id = str(p.key().id())
-      self.redirect("/blog/" + post_id)
+      self.redirect("/blog/post/" + post_id)
     else:
       error = "Please enter both subject and content."
       self.render("post_form.html", subject=subject, content=content, error=error)
@@ -172,7 +172,7 @@ class WelcomeHandler(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([('/', MainHandler),
                                 ('/ascii', AsciiHandler),
                                 ('/blog', BlogHandler),
-                                ('/blog/([-\w]+)', BlogHandler),
+                                ('/blog/post/([-\w]+)', BlogHandler),
                                 ('/blog/newpost', PostHandler),
                                 ('/rot13', rot13Handler),
                                 ('/welcome', WelcomeHandler),
