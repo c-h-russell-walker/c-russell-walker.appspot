@@ -35,13 +35,38 @@ class MainHandler(Handler):
   def get(self):
     self.render("front.html");
 
+# Display 10 most recents entires
 class BlogHandler(Handler):
-  def get(self):
-    self.render("blog.html")
+  def get(self, id=""):
+    posts = db.GqlQuery("SELECT * FROM Post ORDER BY created DESC LIMIT 10")
+    if id:
+      # retrieve post with passed in id cast as integer
+      post = Post.get_by_id(int(id))
+      self.render("blog.html", post=post)
+    else:
+      self.render("blog.html", posts=posts)
+
+class Post(db.Model):
+  subject = db.StringProperty(required = True)
+  content = db.TextProperty(required = True)
+  created = db.DateTimeProperty(auto_now_add = True)
 
 class PostHandler(Handler):
   def get(self):
     self.render("post_form.html")
+  def post(self):
+    subject = escape_html(self.request.get("subject"))
+    content = escape_html(self.request.get("content"))
+    
+    if subject and content:
+      p = Post(subject = subject, content = content)
+      p.put()
+      # redirect to permalink for entry
+      post_id = str(p.key().id())
+      self.redirect("/blog/" + post_id)
+    else:
+      error = "Please enter both subject and content."
+      self.render("post_form.html", subject=subject, content=content, error=error)
 
 class Art(db.Model):
   title = db.StringProperty(required = True)
@@ -147,6 +172,7 @@ class WelcomeHandler(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([('/', MainHandler),
                                 ('/ascii', AsciiHandler),
                                 ('/blog', BlogHandler),
+                                ('/blog/([-\w]+)', BlogHandler),
                                 ('/blog/newpost', PostHandler),
                                 ('/rot13', rot13Handler),
                                 ('/welcome', WelcomeHandler),
