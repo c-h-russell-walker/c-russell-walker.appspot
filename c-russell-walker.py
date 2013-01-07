@@ -38,18 +38,24 @@ class MainHandler(Handler):
 # Display 10 most recents entires
 class BlogHandler(Handler):
   def get(self, id=""):
-    posts = db.GqlQuery("SELECT * FROM Post ORDER BY created DESC LIMIT 10")
     if id:
       # retrieve post with passed in id cast as integer
       post = Post.get_by_id(int(id))
+      if not post:
+        self.error(404)
+        return
       self.render("blog.html", post=post)
     else:
+      # posts = db.GqlQuery("SELECT * FROM Post ORDER BY created DESC LIMIT 10")
+      # Google App Engine API - todo: add 10 limit
+      posts = Post.all().order('-created')
       self.render("blog.html", posts=posts)
 
 class Post(db.Model):
   subject = db.StringProperty(required = True)
   content = db.TextProperty(required = True)
   created = db.DateTimeProperty(auto_now_add = True)
+  last_modified = db.DateTimeProperty(auto_now = True)
 
 class PostHandler(Handler):
   def get(self):
@@ -172,7 +178,7 @@ class WelcomeHandler(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([('/', MainHandler),
                                 ('/ascii', AsciiHandler),
                                 ('/blog', BlogHandler),
-                                ('/blog/post/([-\w]+)', BlogHandler),
+                                ('/blog/post/([0-9]+)', BlogHandler),
                                 ('/blog/newpost', PostHandler),
                                 ('/rot13', rot13Handler),
                                 ('/welcome', WelcomeHandler),
